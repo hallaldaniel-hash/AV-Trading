@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://hallaldaniel-hash.github.io/AV-Trading/sitemap.xml
