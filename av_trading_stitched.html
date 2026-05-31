@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AV Trading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C; --gold-light: #F0C96A; --gold-dim: #8a6c2a;
+    --dark: #060810; --dark2: #0c1120; --dark3: #111827;
+    --white: #f5f0e8; --gray: #9ca3af; --accent: #1a2540;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Tajawal', sans-serif; background: var(--dark); color: var(--white); overflow-x: hidden; cursor: none; }
+
+  /* CURSOR */
+  .cursor { width:12px;height:12px;background:var(--gold);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9999;transition:transform .15s ease;mix-blend-mode:difference; }
+  .cursor-ring { width:36px;height:36px;border:1.5px solid var(--gold);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transition:transform .35s cubic-bezier(.25,.46,.45,.94);opacity:.5; }
+
+  /* NOISE */
+  body::before { content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");opacity:.045;pointer-events:none;z-index:9997; }
+
+  /* GLOBAL PARTICLE CANVAS */
+ #particle-canvas { position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.7; }
+
+  /* GLOBAL AMBIENT ORBS */
+  .global-orb { position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0; }
+  .global-orb-1 { width:700px;height:700px;background:radial-gradient(circle,rgba(201,168,76,.07),transparent 65%);top:-200px;right:-150px;animation:gOrbFloat1 14s ease-in-out infinite; }
+  .global-orb-2 { width:500px;height:500px;background:radial-gradient(circle,rgba(26,37,100,.4),transparent 65%);bottom:10%;left:-100px;animation:gOrbFloat2 18s ease-in-out infinite; }
+  .global-orb-3 { width:350px;height:350px;background:radial-gradient(circle,rgba(201,168,76,.05),transparent 65%);bottom:30%;right:10%;animation:gOrbFloat3 11s ease-in-out infinite; }
+ @keyframes gOrbFloat1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-60px,40px) scale(1.05)} 66%{transform:translate(30px,-50px) scale(.95)} }
+ @keyframes gOrbFloat2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(50px,-60px)} }
+ @keyframes gOrbFloat3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-40px,30px) scale(1.1)} }
+
+  /* SCANLINE */
+  body::after { content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);pointer-events:none;z-index:9996;animation:scanMove 8s linear infinite; }
+ @keyframes scanMove { 0%{background-position:0 0} 100%{background-position:0 100px} }
+
+  /* NAV */
+  nav { position:fixed;top:0;width:100%;z-index:100;padding:20px 60px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(6,8,16,.95),transparent);backdrop-filter:blur(2px); }
+  .logo { font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;color:var(--gold);text-shadow:0 0 30px rgba(201,168,76,.4); }
+  .logo span { color:var(--white); }
+  .nav-links { display:flex;gap:36px;list-style:none; }
+  .nav-links a { color:var(--gray);text-decoration:none;font-size:.9rem;font-weight:500;letter-spacing:1px;transition:color .3s;position:relative; }
+  .nav-links a::after { content:'';position:absolute;bottom:-4px;right:0;width:0;height:1px;background:var(--gold);transition:width .3s; }
+  .nav-links a:hover { color:var(--gold); }
+  .nav-links a:hover::after { width:100%; }
+  .
+nav-right { display:flex;align-items:center;gap:14px; }
+  .nav-cta { background:var(--gold);color:var(--dark);padding:10px 28px;border-radius:2px;font-weight:700;font-size:.85rem;text-decoration:none;letter-spacing:1px;transition:all .3s;border:1px solid var(--gold); }
+  .nav-cta:hover { background:transparent;color:var(--gold); }
+
+  /* LANG TOGGLE */
+  .lang-toggle { display:flex;align-items:center;border:1px solid rgba(201,168,76,.35);border-radius:2px;overflow:hidden; }
+  .lang-btn { padding:8px 14px;font-size:.75rem;font-weight:700;letter-spacing:1px;background:transparent;color:var(--gray);border:none;cursor:pointer;font-family:'Tajawal',sans-serif;transition:all .25s; }
+  .lang-btn.active { background:var(--gold);color:var(--dark); }
+  .lang-btn:hover:not(.active) { color:var(--gold); }
+
+  /* GRID BG */
+  .grid-bg { position:absolute;inset:0;background-image:linear-gradient(rgba(201,168,76,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.04) 1px,transparent 1px);background-size:60px 60px;animation:gridMove 20s linear infinite; }
+ @keyframes gridMove { 0%{transform:translateY(0)} 100%{transform:translateY(60px)} }
+
+  /* ORBS */
+  .orb { position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none; }
+  .orb1 { width:500px;height:500px;background:radial-gradient(circle,rgba(201,168,76,.12),transparent 70%);top:-100px;left:-100px;animation:orbFloat 8s ease-in-out infinite; }
+  .orb2 { width:400px;height:400px;background:radial-gradient(circle,rgba(26,37,64,.8),transparent 70%);bottom:0;right:100px;animation:orbFloat 10s ease-in-out infinite reverse; }
+ @keyframes orbFloat { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-30px)} }
+
+  /* TICKER */
+  .ticker-bar { position:absolute;top:80px;width:100%;left:0;overflow:hidden;border-top:1px solid rgba(201,168,76,.1);border-bottom:1px solid rgba(201,168,76,.1);padding:8px 0;background:rgba(201,168,76,.03); }
+  .ticker-inner { display:flex;gap:60px;animation:tickerScroll 25s linear infinite;white-space:nowrap; }
+ @keyframes tickerScroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+  .ticker-item { display:flex;align-items:center;gap:10px;font-size:.78rem;font-family:'Bebas Neue',sans-serif;letter-spacing:1px; }
+  .ticker-item .sym { color:var(--gold); } .ticker-item .price { color:var(--white); }
+  .ticker-item .up { color:#4ade80; } .ticker-item .down { color:#f87171; }
+
+  /* HERO */
+  .hero { min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:120px 60px 60px;position:relative;overflow:hidden; }
+  .hero-tag { font-size:.78rem;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:12px; }
+  .hero-tag::before { content:'';width:40px;height:1px;background:var(--gold); }
+  .hero h1 { font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,10vw,9rem);line-height:.9;margin-bottom:30px;color:var(--white);position:relative;z-index:1; }
+  .hero h1 .gold-text { color:var(--gold);text-shadow:0 0 60px rgba(201,168,76,.3); }
+  .hero-desc { max-width:520px;font-size:1.05rem;line-height:1.8;color:var(--gray);margin-bottom:50px;position:relative;z-index:1; }
+  .hero-buttons { display:flex;gap:20px;position:relative;z-index:1; }
+  .btn-primary { background:var(--gold);color:var(--dark);padding:16px 40px;font-weight:900;font-size:.9rem;letter-spacing:2px;text-decoration:none;border-radius:2px;transition:all .3s;border:2px solid var(--gold);display:inline-block; }
+  .btn-primary:hover { background:transparent;color:var(--gold);transform:translateY(-2px);box-shadow:0 10px 40px rgba(201,168,76,.2); }
+  .btn-secondary { border:2px solid rgba(201,168,76,.3);color:var(--white);padding:16px 40px;font-weight:700;font-size:.9rem;letter-spacing:2px;text-decoration:none;border-radius:2px;transition:all .3s;display:inline-block; }
+  .btn-secondary:hover { border-color:var(--gold);color:var(--gold);transform:translateY(-2px); }
+
+  /* STATS */
+  .
+stats-strip { display:flex;gap:0;margin-top:80px;border-top:1px solid rgba(201,168,76,.15);border-bottom:1px solid rgba(201,168,76,.15);position:relative;z-index:1;width:100%; }
+  .stat-item { flex:1;padding:30px 0;text-align:center;border-left:1px solid rgba(201,168,76,.1);transition:background .3s; }
+  .stat-item:last-child { border-left:none; }
+  .stat-item:hover { background:rgba(201,168,76,.04); }
+  .stat-num { font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--gold);line-height:1; }
+  .stat-label { font-size:.8rem;color:var(--gray);letter-spacing:2px;margin-top:6px; }
+
+  /* SECTION */
+  section { padding:120px 60px; }
+  .section-tag { font-size:.75rem;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:12px; }
+  .section-tag::before { content:'';width:30px;height:1px;background:var(--gold); }
+  .section-title { font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,5vw,5rem);line-height:1;margin-bottom:20px; }
+  .section-sub { color:var(--gray);font-size:1rem;line-height:1.8;max-width:600px;margin-bottom:60px; }
+
+  /* BOT */
+  .bot-section { background:var(--dark2);position:relative;overflow:hidden; }
+  .bot-section::before { content:'BOT';font-family:'Bebas Neue',sans-serif;font-size:20rem;position:absolute;left:-30px;top:50%;transform:translateY(-50%);color:rgba(201,168,76,.03);pointer-events:none;line-height:1; }
+  .bot-grid { display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center; }
+  .bot-features { display:flex;flex-direction:column;gap:30px; }
+  .feature-card { display:flex;gap:20px;align-items:flex-start;padding:28px;border:1px solid rgba(201,168,76,.1);border-radius:4px;transition:all .3s;background:rgba(201,168,76,.02);position:relative;overflow:hidden; }
+  .feature-card::before { content:'';position:absolute;top:0;right:0;width:3px;height:0;background:var(--gold);transition:height .3s; }
+  .feature-card:hover { border-color:rgba(201,168,76,.3); }
+  .feature-card:hover::before { height:100%; }
+  .feature-icon { width:44px;height:44px;min-width:44px;border:1px solid rgba(201,168,76,.3);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:rgba(201,168,76,.05); }
+  .feature-card h3 { font-size:1rem;font-weight:700;margin-bottom:6px; }
+  .feature-card p { font-size:.85rem;color:var(--gray);line-height:1.7; }
+
+  /* BOT VISUAL */
+  .bot-visual { position:relative;display:flex;justify-content:center;align-items:center; }
+  .bot-screen { width:100%;max-width:420px;background:var(--dark3);border:1px solid rgba(201,168,76,.2);border-radius:8px;overflow:hidden;box-shadow:0 0 60px rgba(201,168,76,.08),0 40px 80px rgba(0,0,0,.5); }
+  .screen-header { padding:16px 20px;background:rgba(201,168,76,.06);border-bottom:1px solid rgba(201,168,76,.1);display:flex;justify-content:space-between;align-items:center;font-size:.8rem; }
+  .screen-title { color:var(--gold);font-weight:700;letter-spacing:1px; }
+  .live-badge { background:#4ade80;color:#000;padding:3px 10px;border-radius:20px;font-size:.65rem;font-weight:900;letter-spacing:2px;animation:pulse 2s infinite; }
+ @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .screen-body { padding:20px; }
+  .chart-area { height:140px;margin-bottom:20px;position:relative;overflow:hidden; }
+  .chart-svg { width:100%;height:100%; }
+  .trade-rows { display:flex;flex-direction:column;gap:10px; }
+  .trade-row { display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:4px;font-size:.78rem;border:1px solid rgba(255,255,255,.05);animation:fadeInUp .5s ease both; }
+  .trade-row:nth-child(1){animation-delay:.1s} .trade-row:nth-child(2){animation-delay:.3s} .trade-row:nth-child(3){animation-delay:.5s}
+ @keyframes fadeInUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .trade-pair { color:var(--white);font-weight:600; }
+  .trade-type { font-size:.65rem;padding:2px 8px;border-radius:2px;font-weight:700;letter-spacing:1px; }
+  .
+buy { background:rgba(74,222,128,.15);color:#4ade80; } .sell { background:rgba(248,113,113,.15);color:#f87171; }
+  .trade-pnl { font-weight:700; } .pos{color:#4ade80} .neg{color:#f87171}
+
+  /* PRICING */
+  .pricing-section { background:var(--dark); }
+  .pricing-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:24px; }
+  .price-card { border:1px solid rgba(201,168,76,.15);border-radius:4px;padding:40px 36px;position:relative;overflow:hidden;transition:all .4s;background:rgba(201,168,76,.02); }
+  .price-card:hover { border-color:rgba(201,168,76,.4);transform:translateY(-6px);box-shadow:0 30px 60px rgba(0,0,0,.3); }
+  .price-card.featured { border-color:var(--gold);background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.02)); }
+  .featured-badge { text-align:center;background:var(--gold);color:var(--dark);font-size:.68rem;font-weight:900;padding:6px;letter-spacing:1px;margin:-40px -36px 20px;display:block; }
+  .plan-name { font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;color:var(--gold);margin-bottom:6px; }
+  .plan-desc { font-size:.82rem;color:var(--gray);margin-bottom:30px; }
+  .plan-price { font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--white);line-height:1; }
+  .plan-price span { font-size:1.2rem;color:var(--gold); }
+  .plan-period { font-size:.78rem;color:var(--gray);margin-bottom:30px; }
+  .plan-features { list-style:none;margin-bottom:36px; }
+  .plan-features li { padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.85rem;color:var(--gray);display:flex;align-items:center;gap:10px; }
+  .plan-features li::before { content:'✦';color:var(--gold);font-size:.6rem; }
+  .plan-features li.included { color:var(--white); }
+  .plan-btn { width:100%;padding:14px;border:2px solid var(--gold);border-radius:2px;background:transparent;color:var(--gold);font-family:'Tajawal',sans-serif;font-weight:900;font-size:.9rem;letter-spacing:2px;cursor:pointer;transition:all .3s; }
+  .plan-btn:hover,.price-card.featured .plan-btn { background:var(--gold);color:var(--dark); }
+  .price-card.featured .plan-btn:hover { background:transparent;color:var(--gold); }
+
+  /* INVEST */
+  .invest-section { background:var(--dark2); }
+  .invest-grid { display:grid;grid-template-columns:1.2fr 1fr;gap:80px;align-items:center; }
+  .invest-steps { display:flex;flex-direction:column; }
+  .invest-step { display:flex;gap:24px;padding:28px 0;border-bottom:1px solid rgba(201,168,76,.08); }
+  .step-num { font-family:'Bebas Neue',sans-serif;font-size:3rem;color:rgba(201,168,76,.15);line-height:1;min-width:60px;transition:color .3s; }
+  .invest-step:hover .step-num { color:var(--gold); }
+  .step-content h3 { font-size:1rem;font-weight:700;margin-bottom:8px; }
+  .step-content p { font-size:.85rem;color:var(--gray);line-height:1.7; }
+  .invest-visual { background:var(--dark3);border:1px solid rgba(201,168,76,.15);border-radius:6px;padding:36px; }
+  .returns-title { font-size:.78rem;color:var(--gray);letter-spacing:2px;margin-bottom:20px; }
+  .bar-group { display:flex;flex-direction:column;gap:14px;margin-bottom:24px; }
+  .bar-item { display:flex;align-items:center;gap:14px; }
+  .bar-label { font-size:.78rem;color:var(--gray);min-width:55px; }
+  .bar-track { flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden; }
+  .bar-fill { height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold-dim),var(--gold));animation:barGrow 1.5s ease both; }
+ @keyframes barGrow { from{width:0%} }
+  .bar-val { font-size:.8rem;color:var(--gold);font-weight:700;min-width:50px; }
+  .min-invest-box { background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:4px;padding:18px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center; }
+  .min-invest-label { font-size:.78rem;color:var(--gray);letter-spacing:1px; }
+  .min-invest-val { font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--gold); }
+  .risk-note { font-size:.72rem;color:rgba(156,163,175,.5);border-top:1px solid rgba(255,255,255,.
+05);padding-top:20px;line-height:1.8; }
+
+  /* ABOUT */
+  .about-section { background:var(--dark); }
+  .about-grid { display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center; }
+  .about-text h2 { font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,5vw,5rem);line-height:1;margin-bottom:30px; }
+  .about-text p { color:var(--gray);font-size:.95rem;line-height:1.9;margin-bottom:20px; }
+  .exp-badge { display:inline-flex;align-items:center;gap:16px;border:1px solid rgba(201,168,76,.3);padding:16px 28px;border-radius:2px;margin-top:20px;background:rgba(201,168,76,.04); }
+  .exp-num { font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--gold);line-height:1; }
+  .exp-label { font-size:.8rem;color:var(--gray);line-height:1.5; }
+  .team-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+  .team-card { padding:28px;border:1px solid rgba(201,168,76,.1);border-radius:4px;text-align:center;transition:all .3s;background:rgba(201,168,76,.02); }
+  .team-card:hover { border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.05); }
+  .team-avatar { width:64px;height:64px;border-radius:50%;border:2px solid rgba(201,168,76,.3);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:rgba(201,168,76,.05); }
+  .team-name { font-weight:700;font-size:.9rem;margin-bottom:4px; }
+  .team-role { font-size:.75rem;color:var(--gold);letter-spacing:1px; }
+
+  /* CONTACT */
+  .contact-section { background:var(--dark2);text-align:center; }
+  .contact-section .section-tag { justify-content:center; }
+  .contact-section .section-tag::before { display:none; }
+  .contact-wrap { max-width:700px;margin:0 auto; }
+  .contact-desc { color:var(--gray);font-size:1rem;line-height:1.8;margin-bottom:50px; }
+  .gold-line { width:60px;height:2px;background:var(--gold);margin:0 auto 40px;opacity:.5; }
+  .contact-btns { display:flex;flex-direction:column;gap:20px;max-width:480px;margin:0 auto 30px; }
+  .contact-channel { display:flex;align-items:center;gap:20px;padding:24px 30px;border-radius:4px;text-decoration:none;border:1px solid rgba(201,168,76,.2);transition:all .3s;position:relative;overflow:hidden; }
+  .contact-channel:hover { transform:translateY(-3px);box-shadow:0 20px 50px rgba(0,0,0,.3); }
+  .whatsapp-btn { background:rgba(37,211,102,.06);border-color:rgba(37,211,102,.25);color:#25d366; }
+  .whatsapp-btn:hover { border-color:rgba(37,211,102,.5);background:rgba(37,211,102,.1); }
+  .telegram-btn { background:rgba(0,136,204,.06);border-color:rgba(0,136,204,.25);color:#0088cc; }
+  .telegram-btn:hover { border-color:rgba(0,136,204,.5);background:rgba(0,136,204,.1); }
+  .channel-icon { width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+  .whatsapp-btn .channel-icon { background:rgba(37,211,102,.12); }
+  .telegram-btn .channel-icon { background:rgba(0,136,204,.12); }
+  .channel-info { flex:1;text-align:right; }
+  html[lang="en"] .channel-info { text-align:left; }
+  .channel-name { font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;margin-bottom:4px; }
+  .channel-num { font-size:.9rem;color:var(--gray);letter-spacing:1px; }
+  .channel-arrow { font-size:1.3rem;opacity:.4;transition:all .3s; }
+  html[lang="en"] .channel-arrow { transform:scaleX(-1); }
+  .contact-channel:hover .channel-arrow { opacity:1;transform:translateX(-4px); }
+  html[lang="en"] .contact-channel:hover .channel-arrow { transform:scaleX(-1) translateX(-4px); }
+  .contact-note { color:rgba(156,163,175,.5);font-size:.8rem;margin-top:10px; }
+
+  /* FOOTER */
+  footer { background:var(--dark);padding:60px;border-top:1px solid rgba(201,168,76,.1); }
+  .footer-inner { display:flex;justify-content:space-between;align-items:center; }
+  .footer-logo { font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:4px;color:var(--gold); }
+  .footer-links { display:flex;gap:30px; }
+  .footer-links a { color:var(--gray);text-decoration:none;font-size:.8rem;transition:color .3s; }
+  .footer-links a:hover { color:var(--gold); }
+  .
+footer-copy { color:rgba(156,163,175,.4);font-size:.75rem; }
+
+  /* REVEAL */
+  .reveal { opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.25,.46,.45,.94); }
+  .reveal.visible { opacity:1;transform:translateY(0); }
+
+  /* ENGLISH MODE */
+  html[lang="en"] { direction:ltr; }
+  html[lang="en"] body { direction:ltr; }
+  html[lang="en"] .hero-tag::before,
+  html[lang="en"] .section-tag::before { order:-1; }
+  html[lang="en"] .nav-links a::after { right:auto;left:0; }
+
+ @media(max-width:900px){
+    nav{padding:20px 24px} .nav-links{display:none}
+    .hero{padding:100px 24px 60px} section{padding:80px 24px}
+    .bot-grid,.invest-grid,.about-grid{grid-template-columns:1fr;gap:50px}
+    .pricing-grid{grid-template-columns:1fr} .form-row{grid-template-columns:1fr}
+    .stats-strip{flex-wrap:wrap} .stat-item{flex:0 0 50%}
+    footer{padding:40px 24px} .footer-inner{flex-direction:column;gap:20px;text-align:center}
+    .team-grid{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+
+<!-- GLOBAL AMBIENT ORBS -->
+<div class="global-orb global-orb-1"></div>
+<div class="global-orb global-orb-2"></div>
+<div class="global-orb global-orb-3"></div>
+
+<!-- PARTICLE CANVAS -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- INTRO ANIMATION -->
+<div id="intro" style="position:fixed;inset:0;z-index:99999;background:#060810;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+
+  <!-- Simple orb -->
+  <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,.12),transparent 70%);filter:blur(60px);pointer-events:none;"></div>
+
+  <!-- Logo -->
+  <div id="intro-logo" style="text-align:center;opacity:0;transform:translateY(20px);transition:all 0.8s cubic-bezier(.25,.46,.45,.94);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(5rem,15vw,9rem);line-height:1;letter-spacing:10px;color:#C9A84C;text-shadow:0 0 60px rgba(201,168,76,.4);">AV</div>
+    <div id="intro-line" style="width:0;height:1px;background:linear-gradient(90deg,transparent,#C9A84C,transparent);margin:12px auto;transition:width 0.8s ease 0.3s;"></div>
+    <div id="intro-word" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(1rem,3vw,1.8rem);letter-spacing:16px;color:#f5f0e8;opacity:0;transition:opacity 0.6s ease 0.7s;">TRADING</div>
+    <div id="intro-tagline" style="margin-top:16px;font-family:'Tajawal',sans-serif;font-size:.8rem;letter-spacing:4px;color:rgba(201,168,76,.5);opacity:0;transition:opacity 0.6s ease 1s;" data-ar="منصة التداول الذكية" data-en="Smart Trading Platform">منصة التداول الذكية</div>
+  </div>
+
+  <!-- Progress bar -->
+  <div style="position:absolute;bottom:50px;width:160px;">
+    <div style="width:100%;height:1px;background:rgba(201,168,76,.1);overflow:hidden;">
+      <div id="intro-bar" style="height:100%;width:0;background:linear-gradient(90deg,#8a6c2a,#C9A84C,#F0C96A);transition:width 2s ease 0.2s;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">AV<span> Trading</span></div>
+  <ul class="nav-links">
+    <li><a href="#bot" data-ar="البوت" data-en="The Bot">البوت</a></li>
+    <li><a href="#pricing" data-ar="الأسعار" data-en="Pricing">الأسعار</a></li>
+    <li><a href="#invest" data-ar="الاستثمار" data-en="Invest">الاستثمار</a></li>
+    <li><a href="#about" data-ar="عن الفريق" data-en="About">عن الفريق</a></li>
+    <li><a href="#terms" data-ar="الشروط والأحكام" data-en="Terms">الشروط</a></li>
+    <li><a href="#contact" data-ar="تواصل معنا" data-en="Contact">تواصل معنا</a></li>
+  </ul>
+  <div class="nav-right">
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btnAr" onclick="setLang('ar')">AR</button>
+      <button class="lang-btn" id="btnEn" onclick="setLang('en')">EN</button>
+    </div>
+    <a href="#pricing" class="nav-cta" data-ar="ابدأ الآن" data-en="Start Now">ابدأ الآن</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="grid-bg"></div>
+<div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="ticker-bar">
+    <div class="ticker-inner">
+      <div class="ticker-item"><span class="sym">XAUUSD</span><span class="price">2,341.50</span><span class="up">+1.24%</span></div>
+      <div class="ticker-item"><span class="sym">EURUSD</span><span class="price">1.0852</span><span class="up">+0.31%</span></div>
+      <div class="ticker-item"><span class="sym">BTCUSD</span><span class="price">68,420</span><span class="up">+2.87%</span></div>
+      <div class="ticker-item"><span class="sym">GBPUSD</span><span class="price">1.2641</span><span class="down">-0.18%</span></div>
+      <div class="ticker-item"><span class="sym">NASDAQ</span><span class="price">18,234</span><span class="up">+0.72%</span></div>
+      <div class="ticker-item"><span class="sym">OIL</span><span class="price">82.40</span><span class="down">-0.55%</span></div>
+      <div class="ticker-item"><span class="sym">ETHUSD</span><span class="price">3,210</span><span class="up">+1.93%</span></div>
+      <div class="ticker-item"><span class="sym">XAUUSD</span><span class="price">2,341.50</span><span class="up">+1.24%</span></div>
+      <div class="ticker-item"><span class="sym">EURUSD</span><span class="price">1.0852</span><span class="up">+0.31%</span></div>
+      <div class="ticker-item"><span class="sym">BTCUSD</span><span class="price">68,420</span><span class="up">+2.87%</span></div>
+      <div class="ticker-item"><span class="sym">GBPUSD</span><span class="price">1.2641</span><span class="down">-0.18%</span></div>
+      <div class="ticker-item"><span class="sym">NASDAQ</span><span class="price">18,234</span><span class="up">+0.72%</span></div>
+      <div class="ticker-item"><span class="sym">OIL</span><span class="price">82.40</span><span class="down">-0.55%</span></div>
+      <div class="ticker-item"><span class="sym">ETHUSD</span><span class="price">3,210</span><span class="up">+1.93%</span></div>
+    </div>
+  </div>
+  <div class="hero-tag" data-ar="منصة التداول الذكية" data-en="Smart Trading Platform">منصة التداول الذكية</div>
+  <h1>
+    <span data-ar="تداول" data-en="Trade">تداول</span><br>
+    <span class="gold-text" data-ar="بذكاء." data-en="Smart.">بذكاء.</span><br>
+    <span data-ar="ربح" data-en="Earn">ربح</span> <span class="gold-text" data-ar="أكثر." data-en="More.">أكثر.</span>
+  </h1>
+  <p class="hero-desc" data-ar="بوت تداول متطور مدعوم بخوارزميات متقدمة وخبرة ٥ سنوات في الأسواق المالية العالمية. أجّر البوت أو استثمر معنا وحقق عوائد مستدامة." data-en="An advanced trading bot powered by cutting-edge algorithms and 5 years of experience in global financial markets. Rent the bot or invest with us and achieve sustainable returns.">بوت تداول متطور مدعوم بخوارزميات متقدمة وخبرة ٥ سنوات في الأسواق المالية العالمية. أجّر البوت أو استثمر معنا وحقق عوائد مستدامة.</p>
+  <div class="hero-buttons">
+    <a href="#pricing" class="btn-primary" data-ar="استأجر البوت" data-en="Rent the Bot">استأجر البوت</a>
+    <a href="#invest" class="btn-secondary" data-ar="استثمر معنا" data-en="Invest With Us">استثمر معنا</a>
+  </div>
+  <div class="stats-strip">
+    <div class="stat-item"><div class="stat-num">+5</div><div class="stat-label" data-ar="سنوات خبرة" data-en="Years Experience">سنوات خبرة</div></div>
+    <div class="stat-item"><div class="stat-num">1200+</div><div class="stat-label" data-ar="صفقة منفذة" data-en="Trades Executed">صفقة منفذة</div></div>
+    <div class="stat-item"><div class="stat-num">20%</div><div class="stat-label" data-ar="عائد شهري" data-en="Monthly Return">عائد شهري</div></div>
+    <div class="stat-item"><div class="stat-num">24/7</div><div class="stat-label" data-ar="تداول مستمر" data-en="Non-Stop Trading">تداول مستمر</div></div>
+  </div>
+</section>
+
+<!-- BOT -->
+<section class="bot-section" id="bot">
+  <div class="section-tag reveal" data-ar="بوت التداول الذكي" data-en="Smart Trading Bot">بوت التداول الذكي</div>
+<h2 class="section-title reveal"><span data-ar="آلية عمل" data-en="How the">آلية عمل</span><br><span style="color:var(--gold)" data-ar="البوت" data-en="Bot Works">البوت</span></h2>
+  <p class="section-sub reveal" data-ar="بوتنا يعمل على مدار الساعة، يحلل السوق ويتخذ قرارات دقيقة بدون تدخل بشري. نظام متطور يعتمد على الذكاء الاصطناعي وتحليل البيانات الضخمة." data-en="Our bot works around the clock, analyzing markets and making precise decisions without human intervention — powered by AI and big data analytics.">بوتنا يعمل على مدار الساعة، يحلل السوق ويتخذ قرارات دقيقة بدون تدخل بشري. نظام متطور يعتمد على الذكاء الاصطناعي وتحليل البيانات الضخمة.</p>
+  <div class="bot-grid">
+    <div class="bot-features reveal">
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <div>
+          <h3 data-ar="ذكاء اصطناعي متطور" data-en="Advanced AI Engine">ذكاء اصطناعي متطور</h3>
+          <p data-ar="خوارزميات تعلم الآلة تتكيف مع تغيرات السوق في الوقت الفعلي وتتعلم من كل صفقة." data-en="Machine learning algorithms that adapt to market changes in real time and learn from every trade.">خوارزميات تعلم الآلة تتكيف مع تغيرات السوق في الوقت الفعلي وتتعلم من كل صفقة.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div>
+          <h3 data-ar="تنفيذ فوري للصفقات" data-en="Instant Trade Execution">تنفيذ فوري للصفقات</h3>
+          <p data-ar="دخول وخروج احترافي في أقل من ثانية، مع إدارة مثالية للمخاطر في كل صفقة." data-en="Professional entry and exit in under a second, with perfect risk management on every trade.">دخول وخروج احترافي في أقل من ثانية، مع إدارة مثالية للمخاطر في كل صفقة.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <div>
+          <h3 data-ar="إدارة متقدمة للمخاطر" data-en="Advanced Risk Management">إدارة متقدمة للمخاطر</h3>
+          <p data-ar="نظام stop-loss وtake-profit ذكي يحمي رأس مالك ويعظم الأرباح تلقائياً." data-en="Smart stop-loss and take-profit system that protects your capital and maximizes profits automatically.">نظام stop-loss وtake-profit ذكي يحمي رأس مالك ويعظم الأرباح تلقائياً.</p>
+        </div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div>
+          <h3 data-ar="تقارير تفصيلية" data-en="Detailed Reports">تقارير تفصيلية</h3>
+          <p data-ar="لوحة تحكم واضحة تتابع فيها كل صفقاتك، الأرباح، والإحصائيات بشكل يومي." data-en="A clear dashboard where you track all your trades, profits, and statistics daily.">لوحة تحكم واضحة تتابع فيها كل صفقاتك، الأرباح، والإحصائيات بشكل يومي.</p>
+        </div>
+      </div>
+    </div>
+    <div class="bot-visual reveal">
+      <div class="bot-screen">
+        <div class="screen-header">
+          <span class="screen-title">AV BOT — LIVE</span>
+          <span class="live-badge">LIVE</span>
+        </div>
+        <div class="screen-body">
+          <div class="chart-area">
+            <svg class="chart-svg" viewBox="0 0 380 140" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#C9A84C" stop-opacity="0.3"/>
+                  <stop offset="100%" stop-color="#C9A84C" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,110 L30,95 L60,105 L90,80 L120,70 L150,85 L180,60 L210,45 L240,55 L270,35 L300,42 L330,25 L360,30 L380,20" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M0,110 L30,95 L60,105 L90,80 L120,70 L150,85 L180,60 L210,45 L240,55 L270,35 L300,42 L330,25 L360,30 L380,20 L380,140 L0,140 Z" fill="url(#chartGrad)"/>
+              <circle cx="380" cy="20" r="4" fill="#C9A84C">
+                <animate attributeName="r" values="4;7;4" dur="1.5s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="1;0.5;1" dur="1.5s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+</div>
+          <div class="market-prices-box" style="display:flex;flex-direction:column;gap:10px;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-section" id="pricing">
+  <div class="section-tag reveal" data-ar="خطط الإيجار" data-en="Rental Plans">خطط الإيجار</div>
+  <h2 class="section-title reveal"><span data-ar="اختر" data-en="Choose">اختر</span> <span style="color:var(--gold)" data-ar="خطتك" data-en="Your Plan">خطتك</span></h2>
+  <p class="section-sub reveal" data-ar="أجّر بوت التداول الذكي واستمتع بالأرباح التلقائية. كل الخطط تشمل دعماً فنياً كاملاً من فريقنا." data-en="Rent the smart trading bot and enjoy automatic profits. All plans include full technical support from our team.">أجّر بوت التداول الذكي واستمتع بالأرباح التلقائية. كل الخطط تشمل دعماً فنياً كاملاً من فريقنا.</p>
+  <div class="pricing-grid">
+    <div class="price-card reveal">
+      <div class="risk-indicator" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <span style="display:flex;gap:4px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#4ade80;display:inline-block;box-shadow:0 0 8px #4ade80;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.1);display:inline-block;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.1);display:inline-block;"></span>
+        </span>
+        <span style="font-size:.7rem;color:#4ade80;letter-spacing:2px;font-weight:700;" data-ar="مخاطرة منخفضة" data-en="LOW RISK">مخاطرة منخفضة</span>
+      </div>
+      <div class="plan-name" data-ar="آمن" data-en="Safe">آمن</div>
+      <div class="plan-desc" data-ar="عوائد ثابتة ومستقرة بأقل مخاطرة ممكنة" data-en="Steady, stable returns with the lowest possible risk">عوائد ثابتة ومستقرة بأقل مخاطرة ممكنة</div>
+      <div class="plan-price"><span>$</span>2,000</div>
+      <div class="plan-period" data-ar="الحد الأدنى للاستثمار" data-en="Minimum Investment">الحد الأدنى للاستثمار</div>
+      <ul class="plan-features">
+        <li class="included" data-ar="عائد شهري: ٢٠٪ – ٤٠٪" data-en="Monthly return: 20% – 40%">عائد شهري: ٢٠٪ – ٤٠٪</li>
+        <li class="included" data-ar="استراتيجية محافظة" data-en="Conservative strategy">استراتيجية محافظة</li>
+        <li class="included" data-ar="حماية رأس المال أولاً" data-en="Capital protection first">حماية رأس المال أولاً</li>
+        <li class="included" data-ar="تقارير أسبوعية" data-en="Weekly reports">تقارير أسبوعية</li>
+        <li class="included" data-ar="دعم على مدار الساعة" data-en="24/7 support">دعم على مدار الساعة</li>
+        <li data-ar="استراتيجيات عالية العائد" data-en="High-yield strategies">استراتيجيات عالية العائد</li>
+      </ul>
+
+      <!-- MT5 Account Details -->
+      <div style="margin-bottom:20px;border:1px solid rgba(201,168,76,.2);border-radius:4px;overflow:hidden;">
+        <div style="background:rgba(201,168,76,.08);padding:8px 14px;font-size:.65rem;color:var(--gold);letter-spacing:2px;font-weight:700;border-bottom:1px solid rgba(201,168,76,.15);" data-ar="بيانات الحساب — MT5" data-en="ACCOUNT DETAILS — MT5">بيانات الحساب — MT5</div>
+        <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.02);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.68rem;color:var(--gray);" data-ar="السيرفر" data-en="Server">السيرفر</span>
+            <span style="font-size:.75rem;color:var(--white);font-weight:600;">Exness-mt5Real34</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.68rem;color:var(--gray);" data-ar="رقم الحساب" data-en="Login">رقم الحساب</span>
+            <span style="font-size:.75rem;color:var(--white);font-weight:600;">253515960</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+<span style="font-size:.68rem;color:var(--gray);" data-ar="كلمة المرور" data-en="Password">كلمة المرور</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="pwd-text" style="font-size:.75rem;color:var(--white);font-weight:600;letter-spacing:2px;">••••••••••</span>
+              <button onclick="togglePwd()" id="pwd-btn" style="font-size:.6rem;color:var(--gold);background:none;border:1px solid rgba(201,168,76,.3);border-radius:2px;padding:2px 7px;cursor:pointer;font-family:'Tajawal',sans-serif;">عرض</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="plan-btn" data-ar="ابدأ الآن" data-en="Start Now">ابدأ الآن</button>
+    </div>
+
+    <div class="price-card featured reveal">
+      <span class="featured-badge" data-ar="الأكثر طلباً" data-en="Most Popular">الأكثر طلباً</span>
+      <div class="risk-indicator" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <span style="display:flex;gap:4px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#facc15;display:inline-block;box-shadow:0 0 8px #facc15;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#facc15;display:inline-block;box-shadow:0 0 8px #facc15;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.1);display:inline-block;"></span>
+        </span>
+        <span style="font-size:.7rem;color:#facc15;letter-spacing:2px;font-weight:700;" data-ar="مخاطرة متوسطة" data-en="MEDIUM RISK">مخاطرة متوسطة</span>
+      </div>
+      <div class="plan-name" data-ar="متوازن" data-en="Balanced">متوازن</div>
+      <div class="plan-desc" data-ar="التوازن المثالي بين العائد والمخاطرة" data-en="The ideal balance between return and risk">التوازن المثالي بين العائد والمخاطرة</div>
+      <div class="plan-price"><span>$</span>1,000</div>
+      <div class="plan-period" data-ar="الحد الأدنى للاستثمار" data-en="Minimum Investment">الحد الأدنى للاستثمار</div>
+      <ul class="plan-features">
+        <li class="included" data-ar="عائد شهري: ٤٠٪ – ٥٠٪" data-en="Monthly return: 40% – 50%">عائد شهري: ٤٠٪ – ٥٠٪</li>
+        <li class="included" data-ar="استراتيجية متوازنة" data-en="Balanced strategy">استراتيجية متوازنة</li>
+        <li class="included" data-ar="زوج عملة واحد" data-en="1 currency pair">زوج عملة واحد</li>
+        <li class="included" data-ar="تقارير يومية مفصلة" data-en="Detailed daily reports">تقارير يومية مفصلة</li>
+        <li class="included" data-ar="إدارة احترافية للمخاطر" data-en="Professional risk management">إدارة احترافية للمخاطر</li>
+        <li class="included" data-ar="دعم على مدار الساعة" data-en="24/7 support">دعم على مدار الساعة</li>
+      </ul>
+
+      <!-- MT5 Account Details -->
+      <div style="margin-bottom:20px;border:1px solid rgba(250,204,21,.2);border-radius:4px;overflow:hidden;">
+        <div style="background:rgba(250,204,21,.08);padding:8px 14px;font-size:.65rem;color:#facc15;letter-spacing:2px;font-weight:700;border-bottom:1px solid rgba(250,204,21,.15);" data-ar="بيانات الحساب — MT5" data-en="ACCOUNT DETAILS — MT5">بيانات الحساب — MT5</div>
+        <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.02);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.68rem;color:var(--gray);" data-ar="السيرفر" data-en="Server">السيرفر</span>
+            <span style="font-size:.75rem;color:var(--white);font-weight:600;">Ultima server 1</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.68rem;color:var(--gray);" data-ar="رقم الحساب" data-en="Login">رقم الحساب</span>
+            <span style="font-size:.75rem;color:var(--white);font-weight:600;">27392603</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:.
+68rem;color:var(--gray);" data-ar="كلمة المرور" data-en="Password">كلمة المرور</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="pwd-text-med" style="font-size:.75rem;color:var(--white);font-weight:600;letter-spacing:2px;">••••••••••</span>
+              <button onclick="togglePwdMed()" id="pwd-btn-med" style="font-size:.6rem;color:#facc15;background:none;border:1px solid rgba(250,204,21,.3);border-radius:2px;padding:2px 7px;cursor:pointer;font-family:'Tajawal',sans-serif;">عرض</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="plan-btn" data-ar="ابدأ الآن" data-en="Start Now">ابدأ الآن</button>
+    </div>
+
+    <div class="price-card reveal">
+      <div class="risk-indicator" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <span style="display:flex;gap:4px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#f87171;display:inline-block;box-shadow:0 0 8px #f87171;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#f87171;display:inline-block;box-shadow:0 0 8px #f87171;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#f87171;display:inline-block;box-shadow:0 0 8px #f87171;"></span>
+        </span>
+        <span style="font-size:.7rem;color:#f87171;letter-spacing:2px;font-weight:700;" data-ar="مخاطرة عالية" data-en="HIGH RISK">مخاطرة عالية</span>
+      </div>
+      <div class="plan-name" data-ar="جريء" data-en="Bold">جريء</div>
+      <div class="plan-desc" data-ar="للمحترفين الباحثين عن أقصى العوائد الممكنة" data-en="For professionals seeking the highest possible returns">للمحترفين الباحثين عن أقصى العوائد الممكنة</div>
+      <div class="plan-price"><span>$</span>500</div>
+      <div class="plan-period" data-ar="الحد الأدنى للاستثمار" data-en="Minimum Investment">الحد الأدنى للاستثمار</div>
+      <ul class="plan-features">
+        <li class="included" data-ar="عائد شهري: ٨٠٪ – ١٠٠٪+" data-en="Monthly return: 80% – 100%+">عائد شهري: ٨٠٪ – ١٠٠٪+</li>
+        <li class="included" data-ar="استراتيجية عدوانية عالية العائد" data-en="Aggressive high-yield strategy">استراتيجية عدوانية عالية العائد</li>
+        <li class="included" data-ar="تقارير لحظية مباشرة" data-en="Real-time live reports">تقارير لحظية مباشرة</li>
+        <li class="included" data-ar="مدير حساب خاص" data-en="Dedicated account manager">مدير حساب خاص</li>
+        <li class="included" data-ar="تخصيص كامل للاستراتيجية" data-en="Full strategy customization">تخصيص كامل للاستراتيجية</li>
+        <li class="included" data-ar="VIP Support 24/7" data-en="VIP Support 24/7">VIP Support 24/7</li>
+      </ul>
+
+      <!-- Coming Soon Banner -->
+      <div style="margin-bottom:20px;background:rgba(248,113,113,.06);border:1px dashed rgba(248,113,113,.3);border-radius:4px;padding:14px;text-align:center;">
+        <div style="font-size:.65rem;color:#f87171;letter-spacing:3px;font-weight:700;margin-bottom:4px;" data-ar="قريباً" data-en="COMING SOON">قريباً</div>
+        <div style="font-size:.78rem;color:rgba(156,163,175,.6);" data-ar="هذه الخطة ستكون متاحة قريباً — ترقّب الإطلاق!" data-en="This plan will be available soon — stay tuned!">هذه الخطة ستكون متاحة قريباً — ترقّب الإطلاق!</div>
+      </div>
+
+      <button class="plan-btn" style="opacity:.5;cursor:not-allowed;pointer-events:none;" data-ar="قريباً" data-en="Coming Soon">قريباً</button>
+    </div>
+  </div>
+</section>
+
+<!-- INVEST -->
+<section class="invest-section" id="invest">
+  <div class="invest-grid">
+    <div>
+      <div class="section-tag reveal" data-ar="الاستثمار معنا" data-en="Invest With Us">الاستثمار معنا</div>
+      <h2 class="section-title reveal"><span data-ar="دع مالك" data-en="Let Your">دع مالك</span><br><span style="color:var(--gold)" data-ar="يعمل" data-en="Money">يعمل</span><br><span data-ar="لك" data-en="Work For You">لك</span></h2>
+      <p class="section-sub reveal" data-ar="لا تريد أن تدير البوت بنفسك؟ استثمر معنا وفريقنا يتولى كل شيء بخبرة ٥ سنوات في الأسواق المالية.
+" data-en="Don't want to manage the bot yourself? Invest with us and our team handles everything with 5 years of experience in financial markets.">لا تريد أن تدير البوت بنفسك؟ استثمر معنا وفريقنا يتولى كل شيء بخبرة ٥ سنوات في الأسواق المالية.</p>
+      <div class="invest-steps reveal">
+        <div class="invest-step">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h3 data-ar="تواصل وتحديد الميزانية" data-en="Contact & Set Budget">تواصل وتحديد الميزانية</h3>
+            <p data-ar="نتواصل معك لفهم أهدافك المالية وتحديد المبلغ المناسب للاستثمار." data-en="We connect with you to understand your financial goals and determine the right investment amount.">نتواصل معك لفهم أهدافك المالية وتحديد المبلغ المناسب للاستثمار.</p>
+          </div>
+        </div>
+        <div class="invest-step">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h3 data-ar="توقيع اتفاقية الشراكة" data-en="Sign Partnership Agreement">توقيع اتفاقية الشراكة</h3>
+            <p data-ar="نوقع اتفاقية واضحة تحدد نسبة الأرباح والشروط وآلية السحب." data-en="We sign a clear agreement defining profit share, terms, and withdrawal process.">نوقع اتفاقية واضحة تحدد نسبة الأرباح والشروط وآلية السحب.</p>
+          </div>
+        </div>
+        <div class="invest-step">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h3 data-ar="البوت يعمل تلقائياً" data-en="Bot Trades Automatically">البوت يعمل تلقائياً</h3>
+            <p data-ar="بوتنا يتداول بحسابك على مدار الساعة بدون أي تدخل منك." data-en="Our bot trades on your account around the clock with zero involvement from you.">بوتنا يتداول بحسابك على مدار الساعة بدون أي تدخل منك.</p>
+          </div>
+        </div>
+        <div class="invest-step">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <h3 data-ar="استلم أرباحك شهرياً" data-en="Receive Monthly Profits">استلم أرباحك شهرياً</h3>
+            <p data-ar="تقارير شهرية شاملة وسحب الأرباح بطريقة مرنة ومناسبة لك." data-en="Comprehensive monthly reports and flexible profit withdrawals on your terms.">تقارير شهرية شاملة وسحب الأرباح بطريقة مرنة ومناسبة لك.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="invest-visual reveal">
+      <div class="returns-title" data-ar="متوسط العوائد الشهرية — نطاق ١٧.٥٪ إلى ٢٠٪" data-en="Average Monthly Returns — Range 17.5% to 20%">متوسط العوائد الشهرية — نطاق ١٧.٥٪ إلى ٢٠٪</div>
+      <div class="bar-group">
+        <div class="bar-item"><div class="bar-label" data-ar="يناير" data-en="Jan">يناير</div><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><div class="bar-val">+17.5%</div></div>
+        <div class="bar-item"><div class="bar-label" data-ar="فبراير" data-en="Feb">فبراير</div><div class="bar-track"><div class="bar-fill" style="width:92%;animation-delay:.1s"></div></div><div class="bar-val">+18.4%</div></div>
+        <div class="bar-item"><div class="bar-label" data-ar="مارس" data-en="Mar">مارس</div><div class="bar-track"><div class="bar-fill" style="width:100%;animation-delay:.2s"></div></div><div class="bar-val">+20.0%</div></div>
+        <div class="bar-item"><div class="bar-label" data-ar="أبريل" data-en="Apr">أبريل</div><div class="bar-track"><div class="bar-fill" style="width:89%;animation-delay:.3s"></div></div><div class="bar-val">+17.8%</div></div>
+        <div class="bar-item"><div class="bar-label" data-ar="مايو" data-en="May">مايو</div><div class="bar-track"><div class="bar-fill" style="width:96%;animation-delay:.4s"></div></div><div class="bar-val">+19.2%</div></div>
+      </div>
+      <div class="min-invest-box">
+        <div class="min-invest-label" data-ar="الحد الأدنى للاستثمار" data-en="Minimum Investment">الحد الأدنى للاستثمار</div>
+        <div class="min-invest-val">$2,000</div>
+      </div>
+      <div class="risk-note" data-ar="⚠️ التداول في الأسواق المالية ينطوي على مخاطر. العوائد المذكورة هي بناءً على أداء تاريخي ولا تضمن أداءً مستقبلياً.
+" data-en="⚠️ Trading in financial markets involves risk. Returns mentioned are based on historical performance and do not guarantee future results.">⚠️ التداول في الأسواق المالية ينطوي على مخاطر. العوائد المذكورة هي بناءً على أداء تاريخي ولا تضمن أداءً مستقبلياً.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TERMS -->
+<section id="terms" style="background:var(--dark);padding:120px 60px;position:relative;overflow:hidden;">
+  <!-- BG watermark -->
+  <div style="position:absolute;font-family:'Bebas Neue',sans-serif;font-size:18rem;color:rgba(201,168,76,.025);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;line-height:1;">TERMS</div>
+
+  <div style="max-width:900px;margin:0 auto;">
+    <div class="section-tag reveal" data-ar="الشروط والأحكام" data-en="Terms & Conditions">الشروط والأحكام</div>
+    <h2 class="section-title reveal">
+      <span data-ar="اتفاقية" data-en="Partnership">اتفاقية</span><br>
+      <span style="color:var(--gold);" data-ar="الشراكة" data-en="Agreement">الشراكة</span>
+    </h2>
+    <p class="section-sub reveal" data-ar="يُرجى قراءة الشروط التالية بعناية قبل البدء. الاستمرار في التعامل معنا يعني موافقتك الكاملة على هذه البنود." data-en="Please read the following terms carefully before starting. Continuing to work with us means your full acceptance of these terms.">يُرجى قراءة الشروط التالية بعناية قبل البدء. الاستمرار في التعامل معنا يعني موافقتك الكاملة على هذه البنود.</p>
+
+    <!-- Terms Cards -->
+    <div style="display:flex;flex-direction:column;gap:24px;">
+
+      <!-- Term 1 -->
+      <div class="reveal" style="display:flex;gap:28px;align-items:flex-start;padding:36px;border:1px solid rgba(201,168,76,.15);border-radius:6px;background:rgba(201,168,76,.02);position:relative;overflow:hidden;transition:all .3s;">
+        <div style="position:absolute;top:0;right:0;width:3px;height:100%;background:linear-gradient(to bottom,var(--gold),transparent);"></div>
+        <div style="min-width:64px;height:64px;border:1px solid rgba(201,168,76,.3);border-radius:4px;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,.05);flex-shrink:0;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold);line-height:1;">01</span>
+        </div>
+        <div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--white);" data-ar="إخلاء المسؤولية عن الخسائر" data-en="Disclaimer of Liability">إخلاء المسؤولية عن الخسائر</h3>
+          <p style="font-size:.9rem;color:var(--gray);line-height:1.9;" data-ar="نحن لا نتحمّل أي مسؤولية عن أي نتيجة تترتّب على عمليات التداول، سواءً كانت أرباحاً أو خسائر. إن الاستثمار في الأسواق المالية ينطوي بطبيعته على مخاطر، وكل مستثمر يدخل هذه التجربة بوعي تام بأن الربح والخسارة وجهان لعملة واحدة." data-en="We bear no responsibility for any outcome resulting from trading operations, whether profits or losses. Investing in financial markets inherently involves risk, and every investor enters this experience with full awareness that profit and loss are two sides of the same coin.">نحن لا نتحمّل أي مسؤولية عن أي نتيجة تترتّب على عمليات التداول، سواءً كانت أرباحاً أو خسائر. إن الاستثمار في الأسواق المالية ينطوي بطبيعته على مخاطر، وكل مستثمر يدخل هذه التجربة بوعي تام بأن الربح والخسارة وجهان لعملة واحدة.</p>
+        </div>
+      </div>
+
+      <!-- Term 2 -->
+      <div class="reveal" style="display:flex;gap:28px;align-items:flex-start;padding:36px;border:1px solid rgba(201,168,76,.15);border-radius:6px;background:rgba(201,168,76,.02);position:relative;overflow:hidden;transition:all .3s;">
+        <div style="position:absolute;top:0;right:0;width:3px;height:100%;background:linear-gradient(to bottom,var(--gold),transparent);"></div>
+        <div style="min-width:64px;height:64px;border:1px solid rgba(201,168,76,.3);border-radius:4px;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,.05);flex-shrink:0;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold);line-height:1;">02</span>
+        </div>
+<div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--white);" data-ar="حظر التدخل في عمل البوت" data-en="No Interference with the Bot">حظر التدخل في عمل البوت</h3>
+          <p style="font-size:.9rem;color:var(--gray);line-height:1.9;" data-ar="يُمنع منعاً باتاً على صاحب الحساب أي تدخّل في عمليات التداول أو تعديل الصفقات المفتوحة أو إغلاقها يدوياً. البوت مُصمَّم للعمل باستقلالية تامة وفق استراتيجية محددة، وأي تدخّل خارجي قد يُعطّل هذه الاستراتيجية ويتسبّب في خسائر غير محسوبة." data-en="The account holder is strictly prohibited from interfering with trading operations, modifying open trades, or closing them manually. The bot is designed to operate with full autonomy according to a defined strategy, and any external interference may disrupt this strategy and cause incalculable losses.">يُمنع منعاً باتاً على صاحب الحساب أي تدخّل في عمليات التداول أو تعديل الصفقات المفتوحة أو إغلاقها يدوياً. البوت مُصمَّم للعمل باستقلالية تامة وفق استراتيجية محددة، وأي تدخّل خارجي قد يُعطّل هذه الاستراتيجية ويتسبّب في خسائر غير محسوبة.</p>
+        </div>
+      </div>
+
+      <!-- Term 3 -->
+      <div class="reveal" style="display:flex;gap:28px;align-items:flex-start;padding:36px;border:1px solid rgba(201,168,76,.15);border-radius:6px;background:rgba(201,168,76,.02);position:relative;overflow:hidden;transition:all .3s;">
+        <div style="position:absolute;top:0;right:0;width:3px;height:100%;background:linear-gradient(to bottom,var(--gold),transparent);"></div>
+        <div style="min-width:64px;height:64px;border:1px solid rgba(201,168,76,.3);border-radius:4px;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,.05);flex-shrink:0;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold);line-height:1;">03</span>
+        </div>
+        <div>
+          <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:10px;color:var(--white);" data-ar="آلية سحب الأرباح" data-en="Profit Withdrawal Policy">آلية سحب الأرباح</h3>
+          <p style="font-size:.9rem;color:var(--gray);line-height:1.9;" data-ar="يتم سحب الأرباح المتحقّقة كل أسبوعين. يحق للمستثمر اختيار إعادة استثمار أرباحه أو سحبها، غير أن نسبتنا من هذه الأرباح تُسحب حتماً كل أسبوعين بصرف النظر عن قرار المستثمر. هذا الترتيب يضمن الشفافية الكاملة ويُرسي علاقة شراكة واضحة قائمة على المصلحة المشتركة." data-en="Realized profits are withdrawn every two weeks. The investor may choose to reinvest their profits or withdraw them; however, our share of these profits is withdrawn every two weeks regardless of the investor's decision. This arrangement ensures full transparency and establishes a clear partnership based on mutual interest.">يتم سحب الأرباح المتحقّقة كل أسبوعين. يحق للمستثمر اختيار إعادة استثمار أرباحه أو سحبها، غير أن نسبتنا من هذه الأرباح تُسحب حتماً كل أسبوعين بصرف النظر عن قرار المستثمر. هذا الترتيب يضمن الشفافية الكاملة ويُرسي علاقة شراكة واضحة قائمة على المصلحة المشتركة.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Agreement Notice -->
+    <div class="reveal" style="margin-top:40px;padding:24px 30px;border:1px solid rgba(201,168,76,.25);border-radius:4px;background:rgba(201,168,76,.04);display:flex;align-items:center;gap:20px;">
+      <span style="font-size:1.8rem;flex-shrink:0;">📜</span>
+      <p style="font-size:.85rem;color:var(--gray);line-height:1.8;" data-ar="بالتواصل معنا والبدء في العمل، يُعدّ المستثمر موافقاً على جميع الشروط والأحكام المذكورة أعلاه دون أي تحفّظ. في حال وجود أي استفسار، فريقنا متاح دائماً للإجابة." data-en="By contacting us and starting to work together, the investor is considered to have agreed to all the terms and conditions mentioned above without reservation. If you have any questions, our team is always available to answer.">بالتواصل معنا والبدء في العمل، يُعدّ المستثمر موافقاً على جميع الشروط والأحكام المذكورة أعلاه دون أي تحفّظ. في حال وجود أي استفسار، فريقنا متاح دائماً للإجابة.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about-section" id="about">
+  <div class="about-grid">
+<div class="about-text reveal">
+      <div class="section-tag" data-ar="من نحن" data-en="About Us">من نحن</div>
+      <h2><span data-ar="فريق" data-en="The">فريق</span><br><span style="color:var(--gold)">AV</span><br>Trading</h2>
+      <p data-ar="نحن فريق متخصص في التداول الآلي والبرمجة المالية، نمتلك خبرة عملية تمتد لأكثر من ٥ سنوات في الأسواق المالية العالمية، من الفوركس إلى العملات الرقمية والأسهم." data-en="We are a specialized team in automated trading and financial programming, with over 5 years of hands-on experience in global financial markets — from Forex to crypto and stocks.">نحن فريق متخصص في التداول الآلي والبرمجة المالية، نمتلك خبرة عملية تمتد لأكثر من ٥ سنوات في الأسواق المالية العالمية، من الفوركس إلى العملات الرقمية والأسهم.</p>
+      <p data-ar="بدأنا رحلتنا بشغف حقيقي نحو تحليل السوق وتطوير استراتيجيات ذكية، واليوم نفخر بأن بوتنا حقق نتائج استثنائية لعشرات المستثمرين." data-en="We started our journey with a genuine passion for market analysis and smart strategy development. Today we are proud that our bot has delivered exceptional results for dozens of investors.">بدأنا رحلتنا بشغف حقيقي نحو تحليل السوق وتطوير استراتيجيات ذكية، واليوم نفخر بأن بوتنا حقق نتائج استثنائية لعشرات المستثمرين.</p>
+      <div class="exp-badge">
+        <div class="exp-num">5+</div>
+        <div class="exp-label" data-ar="سنوات خبرة في الأسواق المالية" data-en="Years of Experience in Financial Markets">سنوات خبرة<br>في الأسواق المالية</div>
+      </div>
+    </div>
+    <div class="team-grid reveal">
+      <div class="team-card"><div class="team-avatar">👨‍💻</div><div class="team-name">Ibrahim Rammal</div><div class="team-role" data-ar="مؤسس & مطور البوت" data-en="Founder & Bot Developer">مؤسس & مطور البوت</div></div>
+      <div class="team-card"><div class="team-avatar">📊</div><div class="team-name">Daniel Hallal</div><div class="team-role" data-ar="محلل مالي أول" data-en="Senior Financial Analyst">محلل مالي أول</div></div>
+      <div class="team-card"><div class="team-avatar">🤖</div><div class="team-name" data-ar="البوت الآلي" data-en="Automated Bot">البوت الآلي</div><div class="team-role" data-ar="خبير استراتيجيات" data-en="Strategy Expert">خبير استراتيجيات</div></div>
+      <div class="team-card"><div class="team-avatar">🌐</div><div class="team-name">Hussien Nasrallah</div><div class="team-role" data-ar="مدير علاقات العملاء" data-en="Client Relations Manager">مدير علاقات العملاء</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="contact-wrap">
+    <div class="section-tag reveal" data-ar="تواصل معنا" data-en="Contact Us">تواصل معنا</div>
+    <h2 class="section-title reveal"><span data-ar="ابدأ" data-en="Start">ابدأ</span> <span style="color:var(--gold)" data-ar="رحلتك" data-en="Your Journey">رحلتك</span><br><span data-ar="اليوم" data-en="Today">اليوم</span></h2>
+    <div class="gold-line"></div>
+    <p class="contact-desc reveal" data-ar="تواصل معنا مباشرة عبر واتساب أو تيليغرام — فريقنا جاهز للرد على جميع استفساراتك والبدء فوراً." data-en="Contact us directly via WhatsApp or Telegram — our team is ready to answer all your questions and get started right away.">تواصل معنا مباشرة عبر واتساب أو تيليغرام — فريقنا جاهز للرد على جميع استفساراتك والبدء فوراً.</p>
+
+    <div class="contact-btns reveal">
+      <a href="https://wa.me/96181565129" target="_blank" class="contact-channel whatsapp-btn">
+        <div class="channel-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.
+195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.556 4.112 1.528 5.837L.057 23.428a.75.75 0 00.916.916l5.591-1.471A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.726 9.726 0 01-4.964-1.355l-.356-.211-3.688.969.984-3.595-.232-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+        </div>
+        <div class="channel-info">
+          <div class="channel-name" data-ar="واتساب" data-en="WhatsApp">واتساب</div>
+          <div class="channel-num">+961 81 565 129</div>
+        </div>
+        <div class="channel-arrow">←</div>
+      </a>
+      <a href="https://t.me/privatefunds1" target="_blank" class="contact-channel telegram-btn">
+        <div class="channel-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.9l-2.965-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.963.659z"/></svg>
+        </div>
+        <div class="channel-info">
+          <div class="channel-name" data-ar="تيليغرام" data-en="Telegram">تيليغرام</div>
+          <div class="channel-num">@privatefunds1</div>
+        </div>
+        <div class="channel-arrow">←</div>
+      </a>
+    </div>
+
+    <p class="contact-note reveal" data-ar="متاحون للرد من السبت إلى الخميس، ٩ص — ١٠م (بيروت)" data-en="Available Saturday to Thursday, 9AM — 10PM (Beirut time)">متاحون للرد من السبت إلى الخميس، ٩ص — ١٠م (بيروت)</p>
+  </div>
+</section>
+
+<!-- FLOATING WHATSAPP -->
+<a href="https://wa.me/96181565129" target="_blank" id="wa-float" title="تواصل عبر واتساب" style="
+  position:fixed;bottom:30px;left:30px;z-index:9990;
+  width:60px;height:60px;border-radius:50%;
+  background:#25d366;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 24px rgba(37,211,102,.45);
+  transition:transform .3s ease, box-shadow .3s ease;
+  text-decoration:none;
+  animation:waPop .6s cubic-bezier(.34,1.56,.64,1) 3.5s both;
+">
+  <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.556 4.112 1.528 5.837L.057 23.428a.75.75 0 00.916.916l5.591-1.471A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.726 9.726 0 01-4.964-1.355l-.356-.211-3.688.969.984-3.595-.232-.371A9.718 9.718 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+  </svg>
+  <span style="position:absolute;inset:0;border-radius:50%;border:2px solid #25d366;animation:waRing 2s ease-out infinite;pointer-events:none;"></span>
+</a>
+<style>
+ @keyframes waPop { from{opacity:0;transform:scale(0)} to{opacity:1;transform:scale(1)} }
+ @keyframes waRing { 0%{transform:scale(1);opacity:.7} 100%{transform:scale(1.7);opacity:0} }
+ #wa-float:hover { transform:scale(1.12);box-shadow:0 8px 32px rgba(37,211,102,.6); }
+</style>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">AV Trading</div>
+    <div class="footer-links">
+      <a href="#bot" data-ar="البوت" data-en="Bot">البوت</a>
+      <a href="#pricing" data-ar="الأسعار" data-en="Pricing">الأسعار</a>
+<a href="#invest" data-ar="استثمر معنا" data-en="Invest">استثمر معنا</a>
+      <a href="#about" data-ar="الفريق" data-en="Team">الفريق</a>
+      <a href="#terms" data-ar="الشروط" data-en="Terms">الشروط</a>
+      <a href="#contact" data-ar="تواصل" data-en="Contact">تواصل</a>
+    </div>
+    <div class="footer-copy" data-ar="© 2026 AV Trading. جميع الحقوق محفوظة." data-en="© 2026 AV Trading. All rights reserved.">© 2026 AV Trading. جميع الحقوق محفوظة.</div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [];
+    function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize);
+    const GOLD = 'rgba(201,168,76,';
+    const BLUE = 'rgba(100,140,255,';
+    function Particle(){
+      this.reset = function(){
+        this.x = Math.random() * W; this.y = Math.random() * H;
+        this.r = Math.random() * 1.4 + 0.3;
+        this.vx = (Math.random() - 0.5) * 0.3; this.vy = (Math.random() - 0.5) * 0.3 - 0.08;
+        this.alpha = Math.random() * 0.5 + 0.1;
+        this.color = Math.random() > 0.65 ? GOLD : BLUE;
+ this.life = 0; this.maxLife = Math.random() * 300 + 200;
+        this.twinkleSpeed = Math.random() * 0.02 + 0.005; this.twinkleOffset = Math.random() * Math.PI * 2;
+      };
+      this.reset();
+    }
+    for(let i = 0; i < 120; i++){ const p = new Particle(); p.life = Math.floor(Math.random() * p.maxLife); particles.push(p); }
+    let shooters = [];
+    function spawnShooter(){
+      shooters.push({ x: Math.random() * W, y: Math.random() * H * 0.5, len: Math.random() * 120 + 60, speed: Math.random() * 6 + 4, angle: Math.PI / 4 + (Math.random() - 0.5) * 0.4, alpha: 1, life: 0, maxLife: 40 });
+    }
+    setInterval(spawnShooter, 3500);
+    function draw(){
+      ctx.clearRect(0, 0, W, H);
+      particles.forEach(p => {
+ p.life++;
+        if(p.life > p.maxLife){ p.reset(); return; }
+        const progress = p.life / p.maxLife;
+        const fade = progress < 0.1 ? progress / 0.1 : progress > 0.85 ? (1 - progress) / 0.15 : 1;
+        const twinkle = 0.5 + 0.5 * Math.sin(p.life * p.twinkleSpeed + p.twinkleOffset);
+        const a = p.alpha * fade * twinkle;
+        p.x += p.vx; p.y += p.vy;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + a + ')'; ctx.fill();
+        if(p.r > 1.1){ ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2); ctx.fillStyle = p.color + (a * 0.12) + ')'; ctx.fill(); }
+      });
+      shooters = shooters.filter(s => s.life < s.maxLife);
+      shooters.forEach(s => {
+ s.life++; s.x += Math.cos(s.angle) * s.speed; s.y += Math.sin(s.angle) * s.speed;
+        const fade = 1 - s.life / s.maxLife;
+        const tail = { x: s.x - Math.cos(s.angle) * s.len, y: s.y - Math.sin(s.angle) * s.len };
+        const grad = ctx.createLinearGradient(tail.x, tail.y, s.x, s.y);
+        grad.addColorStop(0, 'rgba(201,168,76,0)'); grad.addColorStop(1, `rgba(240,201,106,${fade * 0.8})`);
+        ctx.beginPath(); ctx.moveTo(tail.x, tail.y); ctx.lineTo(s.x, s.y);
+        ctx.strokeStyle = grad; ctx.lineWidth = 1.5; ctx.stroke();
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.transform=`translate(${mx-6}px,${my-6}px)`;});
+  function animRing(){rx+=(mx-rx-18)*.12;ry+=(my-ry-18)*.12;ring.style.transform=`translate(${rx}px,${ry}px)`;requestAnimationFrame(animRing);}
+  animRing();
+
+  const obs=new IntersectionObserver((entries)=>{entries.forEach((e,i)=>{if(e.isIntersecting)setTimeout(()=>e.target.classList.add('visible'),i*80);});},{threshold:.1});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+  window.addEventListener('scroll',()=>{document.querySelector('nav').style.
+background=window.scrollY>50?'rgba(6,8,16,0.97)':'linear-gradient(to bottom,rgba(6,8,16,.95),transparent)';});
+
+  (function(){
+    document.body.style.overflow='hidden';
+
+    // Show logo
+    setTimeout(()=>{
+      const logo=document.getElementById('intro-logo');
+      if(logo){logo.style.opacity='1';logo.style.transform='translateY(0)';}
+    },200);
+
+    // Expand line
+    setTimeout(()=>{
+      const line=document.getElementById('intro-line');
+      if(line) line.style.width='160px';
+    },500);
+
+    // Show TRADING
+    setTimeout(()=>{
+      const word=document.getElementById('intro-word');
+      if(word) word.style.opacity='1';
+    },800);
+
+    // Show tagline
+    setTimeout(()=>{
+      const tag=document.getElementById('intro-tagline');
+      if(tag) tag.style.opacity='1';
+    },1100);
+
+    // Progress bar
+    setTimeout(()=>{
+      const bar=document.getElementById('intro-bar');
+      if(bar) bar.style.width='100%';
+    },200);
+
+    // Exit — simple fade out
+    setTimeout(()=>{
+      const intro=document.getElementById('intro');
+      if(!intro) return;
+      intro.style.transition='opacity 0.8s ease';
+      intro.style.opacity='0';
+      setTimeout(()=>{ intro.style.display='none'; document.body.style.overflow=''; },800);
+    },2800);
+  })();
+
+  function togglePwdMed() {
+    const el = document.getElementById('pwd-text-med');
+    const btn = document.getElementById('pwd-btn-med');
+    const shown = el.textContent !== '••••••••••';
+    el.textContent = shown ? '••••••••••' : 'Market@123';
+    btn.textContent = shown ? 'عرض' : 'إخفاء';
+  }
+
+  function togglePwd() {
+    const el = document.getElementById('pwd-text');
+    const btn = document.getElementById('pwd-btn');
+    const shown = el.textContent !== '••••••••••';
+    el.textContent = shown ? '••••••••••' : 'Ibrahim1230$';
+    btn.textContent = shown ? 'عرض' : 'إخفاء';
+  }
+
+  // Simulated live price ticker for bot screen
+  (function(){
+    const prices = {
+      gold:  { base: 2341.50, el: 'gold-price',  chEl: 'gold-change',  dec: 2 },
+      btc:   { base: 68420,   el: 'btc-price',   chEl: 'btc-change',   dec: 0 },
+      oil:   { base: 82.40,   el: 'oil-price',   chEl: 'oil-change',   dec: 2 },
+    };
+    const baseChanges = { gold: 1.24, btc: 2.87, oil: -0.55 };
+
+    function fmt(n, dec) {
+      return dec === 0 ? Math.round(n).toLocaleString() : n.toLocaleString(undefined, {minimumFractionDigits: dec, maximumFractionDigits: dec});
+    }
+
+    function tick() {
+      Object.keys(prices).forEach(key => {
+        const p = prices[key];
+        const el = document.getElementById(p.el);
+        const chEl = document.getElementById(p.chEl);
+        if (!el || !chEl) return;
+        const jitter = (Math.random() - 0.5) * (p.base * 0.0008);
+        p.base += jitter;
+        const change = baseChanges[key] + (Math.random() - 0.5) * 0.1;
+        el.textContent = fmt(p.base, p.dec);
+        const sign = change >= 0 ? '+' : '';
+        chEl.textContent = sign + change.toFixed(2) + '%';
+        chEl.style.color = change >= 0 ? '#4ade80' : '#f87171';
+      });
+    }
+    setInterval(tick, 2000);
+  })();
+
+  function setLang(lang) {
+    const html = document.getElementById('htmlRoot');
+    html.lang = lang; html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.getElementById('btnAr').classList.toggle('active', lang==='ar');
+    document.getElementById('btnEn').classList.toggle('active', lang==='en');
+    document.querySelectorAll('[data-ar][data-en]').forEach(el => {
+      if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') return;
+      el.textContent = el.getAttribute('data-' + lang);
+    });
+  }
+</script>
+</body>
+</html>
